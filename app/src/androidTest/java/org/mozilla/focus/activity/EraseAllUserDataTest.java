@@ -8,6 +8,7 @@ package org.mozilla.focus.activity;
 import android.content.Context;
 import android.content.Intent;
 import android.preference.PreferenceManager;
+import android.app.ActivityManager;
 import androidx.test.InstrumentationRegistry;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
@@ -16,6 +17,7 @@ import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.Until;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,6 +34,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertThat;
 import static org.mozilla.focus.fragment.FirstrunFragment.FIRSTRUN_PREF;
+import static org.mozilla.focus.helpers.TestHelper.pressHomeKey;
 import static org.mozilla.focus.helpers.TestHelper.waitingTime;
 
 // This test erases URL and checks for message
@@ -166,5 +169,24 @@ public class EraseAllUserDataTest {
         // Verify that it's on the main view, not showing the previous browsing session
         TestHelper.inlineAutocompleteEditText.waitForExists(waitingTime);
         assertTrue(TestHelper.inlineAutocompleteEditText.exists());
+    }
+    @Test
+    public void notificationEraseHistoryWhileNotInAppTest() throws UiObjectNotFoundException{
+        // Open a webpage
+        TestHelper.inlineAutocompleteEditText.waitForExists(waitingTime);
+        TestHelper.inlineAutocompleteEditText.clearTextField();
+        TestHelper.inlineAutocompleteEditText.setText(webServer.url(TEST_PATH).toString());
+        TestHelper.hint.waitForExists(waitingTime);
+        TestHelper.pressEnterKey();
+
+        pressHomeKey();
+
+        // Pull down system bar and select delete browsing history
+        TestHelper.openNotification();
+        TestHelper.notificationBarDeleteItem.waitForExists(waitingTime);
+        TestHelper.notificationBarDeleteItem.click();
+        TestHelper.erasedMsg.waitForExists(waitingTime);
+
+        assertFalse(mActivityTestRule.getActivity().isDestroyed());
     }
 }
