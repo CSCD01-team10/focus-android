@@ -9,6 +9,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.util.AttributeSet
+import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import mozilla.components.browser.session.Session
 import mozilla.components.browser.session.SessionManager
@@ -19,6 +21,7 @@ import org.mozilla.focus.biometrics.Biometrics
 import org.mozilla.focus.ext.components
 import org.mozilla.focus.fragment.BrowserFragment
 import org.mozilla.focus.fragment.FirstrunFragment
+import org.mozilla.focus.fragment.HistoryFragment
 import org.mozilla.focus.fragment.UrlInputFragment
 import org.mozilla.focus.locale.LocaleAwareAppCompatActivity
 import org.mozilla.focus.session.IntentProcessor
@@ -247,6 +250,12 @@ open class MainActivity : LocaleAwareAppCompatActivity() {
                 .commitAllowingStateLoss()
     }
 
+    private fun showHistoryFragment(currentSession: Session? = null) {
+        supportFragmentManager
+                .beginTransaction()
+                .add(R.id.fragment_history, HistoryFragment.create(currentSession), HistoryFragment.FRAGMENT_TAG)
+    }
+
     private fun showFirstrun(currentSession: Session? = null) {
         supportFragmentManager
                 .beginTransaction()
@@ -285,6 +294,14 @@ open class MainActivity : LocaleAwareAppCompatActivity() {
             // Inject our implementation of IWebView from the WebViewProvider.
             WebViewProvider.create(this, attrs)
         } else super.onCreateView(name, context, attrs)
+    }
+
+    override fun onKeyLongPress(keyCode: Int, event: KeyEvent?): Boolean {
+        if (keyCode.equals(KeyEvent.KEYCODE_BACK)) {
+            showHistoryFragment(components.sessionManager.selectedSession)
+        }
+
+        return super.onKeyLongPress(keyCode, event)
     }
 
     override fun onBackPressed() {
