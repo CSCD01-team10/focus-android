@@ -930,6 +930,15 @@ class BrowserFragment : WebFragment(), LifecycleObserver, View.OnClickListener,
         }
     }
 
+    private fun showBackHistoryFragment() {
+        getWebView()?.let {
+            // TODO change tag
+            HistoryFragment
+                    .create(it)
+                    ?.show(requireActivity().supportFragmentManager, "HISTORY")
+        }
+    }
+
     @Suppress("ComplexMethod")
     fun onBackPressed(): Boolean {
         if (findInPageView!!.visibility == View.VISIBLE) {
@@ -938,8 +947,9 @@ class BrowserFragment : WebFragment(), LifecycleObserver, View.OnClickListener,
             val webView = getWebView()
             webView?.exitFullscreen()
         } else if (canGoBack()) {
-            // Go back in web history
-            goBack()
+            showBackHistoryFragment()
+//            // Go back in web history
+//            goBack()
         } else {
             if (session.source == Session.Source.ACTION_VIEW || session.isCustomTabSession()) {
                 TelemetryWrapper.eraseBackToAppEvent()

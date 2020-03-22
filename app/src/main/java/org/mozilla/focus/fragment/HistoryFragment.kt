@@ -8,9 +8,10 @@ import android.view.ViewGroup
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import mozilla.components.browser.session.Session
 import org.mozilla.focus.R
-import org.mozilla.focus.ext.savedWebViewState
+import org.mozilla.focus.ext.components
 import org.mozilla.focus.web.GeckoWebViewProvider
-import org.mozilla.geckoview.GeckoSession
+import org.mozilla.focus.web.IWebView
+import org.mozilla.focus.web.WebViewProvider
 
 
 class HistoryFragment : BottomSheetDialogFragment() {
@@ -19,29 +20,26 @@ class HistoryFragment : BottomSheetDialogFragment() {
         const val FRAGMENT_TAG = "history"
         private const val ARGUMENT_SESSION_UUID = "sessionUUID"
 
-        fun create(currentSession: Session?): HistoryFragment {
-            Log.d("HistoryFragment.kt", "=== HistoryFragment create() ===")
-            Log.d("HistoryFragment.kt", "=== currentSession $currentSession ===")
+        fun create(webView: IWebView): HistoryFragment? {
+            val geckoWebView = webView as GeckoWebViewProvider.GeckoWebView? ?: return null
+            val provider = (WebViewProvider.engine as GeckoWebViewProvider?) ?: return null
 
-            // get the sessionState
-            val sessionState = currentSession?.savedWebViewState?.getParcelable<GeckoSession.SessionState>(GeckoWebViewProvider.GECKO_SESSION)
-
-            Log.d("HistoryFragment.kt", "=== sessionState $sessionState ===")
-            if (sessionState!= null) {
-                val historySize = sessionState.size
-                val historyIterator = sessionState.iterator()
-                while (historyIterator.hasNext()) {
-                    // Get list of history items
-                    Log.d("HistoryFragment.kt", historyIterator.next().toString())
-                }
+            val historyList = provider.sessionHistoryMap[geckoWebView.session]
+            historyList?.forEach {
+                Log.d("TEST", it.uri)
             }
-
-            val fragment = HistoryFragment()
-            val arguments = Bundle()
-            fragment.arguments = arguments
-
-            return fragment
+            return HistoryFragment()
         }
+    }
+
+    lateinit var session : Session
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        context?.components?.sessionManager?.selectedSession?.apply {
+            session = this
+        } ?: dismiss()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?):

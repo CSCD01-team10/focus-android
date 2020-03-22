@@ -58,6 +58,8 @@ import kotlin.coroutines.CoroutineContext
  */
 @Suppress("TooManyFunctions")
 class GeckoWebViewProvider : IWebViewProvider {
+    val sessionHistoryMap = HashMap<GeckoSession, GeckoSession.HistoryDelegate.HistoryList>()
+
     override fun preload(context: Context) {
         sendTelemetryEventOnSwitchToGecko(context)
         createGeckoRuntime(context)
@@ -74,7 +76,13 @@ class GeckoWebViewProvider : IWebViewProvider {
     }
 
     override fun create(context: Context, attributeSet: AttributeSet?): View {
-        return GeckoWebView(context, attributeSet)
+        return GeckoWebView(context, attributeSet).apply {
+            session?.historyDelegate = object : GeckoSession.HistoryDelegate {
+                override fun onHistoryStateChange(p0: GeckoSession, p1: GeckoSession.HistoryDelegate.HistoryList) {
+                    sessionHistoryMap[p0] = p1
+                }
+            }
+        }
     }
 
     override fun performCleanup(context: Context) {
