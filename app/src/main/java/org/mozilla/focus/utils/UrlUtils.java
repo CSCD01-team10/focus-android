@@ -17,8 +17,52 @@ import org.mozilla.focus.ext.ContextKt;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 
 public class UrlUtils {
+
+    public static final HashMap<String, String> searchEngineShortcutsMap = new HashMap<String, String>() {
+        {
+            put("@google", "Google");
+            put("@amazon", "Amazon.com");
+            put("@duckduckgo", "DuckDuckGo");
+            put("@twitter", "Twitter");
+            put("@wikipedia", "Wikipedia");
+        }
+    };
+
+    public static String getURLForSearchEngineShortcut(Context context, String shortcut, String actualQuery) {
+        String currSearchEngineName = searchEngineShortcutsMap.get(shortcut);
+        if (currSearchEngineName != null) {
+            final SearchEngine searchEngine = ContextKt.getComponents(context).getSearchEngineManager()
+                    .getDefaultSearchEngine(context, currSearchEngineName);
+
+            return searchEngine.buildSearchUrl(actualQuery);
+        }
+
+        return null;
+    }
+
+    public static String[] splitShortcutFromQuery(String query) {
+        String[] splitQuery = query.split(" ", 2);
+        if (splitQuery.length == 2 && splitQuery[0].startsWith("@")){
+            return splitQuery;
+        }
+
+        return null;
+    }
+
+    public static SearchEngine getSearchEngine(Context context, String query) {
+        String[] splitQuery = query.split(" ");
+        String currSearchEngineName = searchEngineShortcutsMap.get(splitQuery[0]);
+        if (currSearchEngineName == null) return null;
+
+        return ContextKt
+                .getComponents(context)
+                .getSearchEngineManager()
+                .getDefaultSearchEngine(context, currSearchEngineName);
+    }
+
     public static String normalize(@NonNull String input) {
         String trimmedInput = input.trim();
         Uri uri = Uri.parse(trimmedInput);
@@ -39,6 +83,11 @@ public class UrlUtils {
         String trimmedUrl = url.trim();
         return !trimmedUrl.contains(" ") && (trimmedUrl.contains(".") || trimmedUrl.contains(":"));
 
+    }
+
+    public static boolean isSearchShortcut(String suggestion) {
+        String[] splitQuery = suggestion.split(" ", 2);
+        return searchEngineShortcutsMap.containsKey(splitQuery[0]);
     }
 
     public static boolean isValidSearchQueryUrl(String url) {

@@ -1,14 +1,20 @@
 package org.mozilla.focus.utils;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import androidx.test.core.app.ApplicationProvider;
+import mozilla.components.browser.search.SearchEngine;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mozilla.focus.browser.LocalizedContent;
+import org.mozilla.focus.ext.ContextKt;
 import org.robolectric.RobolectricTestRunner;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(RobolectricTestRunner.class)
@@ -163,4 +169,51 @@ public class UrlUtilsTest {
         assertTrue(UrlUtils.isLocalizedContent(LocalizedContent.URL_ABOUT));
         assertTrue(UrlUtils.isLocalizedContent(LocalizedContent.URL_RIGHTS));
     }
+
+    @Test
+    public void testGetURLForSearchEngineShortcut() {
+        Context context = ApplicationProvider.getApplicationContext();
+        SearchEngine searchEngine;
+        String searchQuery = "search";
+
+        searchEngine = ContextKt.getComponents(context).getSearchEngineManager()
+                .getDefaultSearchEngine(context, "Google");
+        assertEquals(searchEngine.buildSearchUrl(searchQuery),
+                UrlUtils.getURLForSearchEngineShortcut(context, "@google", searchQuery));
+
+        searchEngine = ContextKt.getComponents(context).getSearchEngineManager()
+                .getDefaultSearchEngine(context, "Amazon.com");
+        assertEquals(searchEngine.buildSearchUrl(searchQuery),
+                UrlUtils.getURLForSearchEngineShortcut(context, "@amazon", searchQuery));
+
+        searchEngine = ContextKt.getComponents(context).getSearchEngineManager()
+                .getDefaultSearchEngine(context, "DuckDuckGo");
+        assertEquals(searchEngine.buildSearchUrl(searchQuery),
+                UrlUtils.getURLForSearchEngineShortcut(context, "@duckduckgo", searchQuery));
+
+        searchEngine = ContextKt.getComponents(context).getSearchEngineManager()
+                .getDefaultSearchEngine(context, "Twitter");
+        assertEquals(searchEngine.buildSearchUrl(searchQuery),
+                UrlUtils.getURLForSearchEngineShortcut(context, "@twitter", searchQuery));
+
+        searchEngine = ContextKt.getComponents(context).getSearchEngineManager()
+                .getDefaultSearchEngine(context, "Wikipedia");
+        assertEquals(searchEngine.buildSearchUrl(searchQuery),
+                UrlUtils.getURLForSearchEngineShortcut(context, "@wikipedia", searchQuery));
+
+        assertNull(UrlUtils.getURLForSearchEngineShortcut(context, "@amazo", "invalid"));
+        assertNull(UrlUtils.getURLForSearchEngineShortcut(context, "@googles", "invalid two"));
+    }
+
+    @Test
+    public void testSplitShortcutFromQuery() {
+        String[] splitQuery = UrlUtils.splitShortcutFromQuery("@amazon books search");
+        assertNotNull(splitQuery);
+        assertEquals("@amazon", splitQuery[0]);
+        assertEquals("books search", splitQuery[1]);
+
+        assertNull(UrlUtils.splitShortcutFromQuery("@amazon"));
+        assertNull(UrlUtils.splitShortcutFromQuery("amazon books"));
+    }
+
 }

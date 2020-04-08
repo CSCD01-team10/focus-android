@@ -712,10 +712,16 @@ class UrlInputFragment :
     private fun normalizeUrlAndSearchTerms(input: String): Triple<Boolean, String, String?> {
         val isUrl = UrlUtils.isUrl(input)
 
+        val shortcutAndQuery = UrlUtils.splitShortcutFromQuery(input)
+        val searchShortcutUrl = if (shortcutAndQuery != null) {
+            val shortcut = shortcutAndQuery[0]
+            val actualQuery = shortcutAndQuery[1]
+            UrlUtils.getURLForSearchEngineShortcut(context, shortcut, actualQuery)
+        } else null
+
         val url = if (isUrl)
             UrlUtils.normalize(input)
-        else
-            UrlUtils.createSearchUrl(context, input)
+        else searchShortcutUrl ?: UrlUtils.createSearchUrl(context, input)
 
         val searchTerms = if (isUrl)
             null
@@ -725,14 +731,24 @@ class UrlInputFragment :
     }
 
     private fun onSearch(query: String, isSuggestion: Boolean = false, alwaysSearch: Boolean = false) {
-        if (alwaysSearch) {
-            openUrl(UrlUtils.createSearchUrl(context, query), query)
+        if (UrlUtils.searchEngineShortcutsMap.containsKey(query)) {
+            val shortcut = ("$query ")
+            urlView.setText(shortcut)
+            urlView.setSelection(shortcut.length)
         } else {
-            val searchTerms = if (UrlUtils.isUrl(query)) null else query
-            val searchUrl =
-                if (searchTerms != null) UrlUtils.createSearchUrl(context, searchTerms) else UrlUtils.normalize(query)
+            if (alwaysSearch) {
+                openUrl(UrlUtils.createSearchUrl(context, query), query)
+            } else {
+                val searchTerms = if (UrlUtils.isUrl(query)) null else query
+                val searchUrl =
+                        if (searchTerms != null) {
+                            UrlUtils.createSearchUrl(context, searchTerms)
+                        } else {
+                            UrlUtils.normalize(query)
+                        }
 
-            openUrl(searchUrl, searchTerms)
+                openUrl(searchUrl, searchTerms)
+            }
         }
 
         TelemetryWrapper.searchSelectEvent(isSuggestion)
